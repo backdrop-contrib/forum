@@ -22,14 +22,14 @@
 function forum_form_main($type, $edit = array()) {
   $edit = (array) $edit;
   if ((isset($_POST['op']) && $_POST['op'] == t('Delete')) || !empty($_POST['confirm'])) {
-    return drupal_get_form('forum_confirm_delete', $edit['tid']);
+    return backdrop_get_form('forum_confirm_delete', $edit['tid']);
   }
   switch ($type) {
     case 'forum':
-      return drupal_get_form('forum_form_forum', $edit);
+      return backdrop_get_form('forum_form_forum', $edit);
       break;
     case 'container':
-      return drupal_get_form('forum_form_container', $edit);
+      return backdrop_get_form('forum_form_container', $edit);
       break;
   }
 }
@@ -71,7 +71,7 @@ function forum_form_forum($form, &$form_state, $edit = array()) {
     '#description' => t('Forums are displayed in ascending order by weight (forums with equal weights are displayed alphabetically).'),
   );
 
-  $form['vid'] = array('#type' => 'hidden', '#value' => variable_get('forum_nav_vocabulary', ''));
+  $form['vocabulary'] = array('#type' => 'hidden', '#value' => config_get('forum.settings', 'forum_nav_vocabulary'));
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save'));
   if ($edit['tid']) {
@@ -97,20 +97,21 @@ function forum_form_submit($form, &$form_state) {
     $type = t('forum');
   }
 
-  $term = (object) $form_state['values'];
+  $term = entity_create('taxonomy_term', $form_state['values']);
+
   $status = taxonomy_term_save($term);
   switch ($status) {
     case SAVED_NEW:
       if ($container) {
-        $containers = variable_get('forum_containers', array());
+        $containers = config_get('forum.settings', 'forum_containers');
         $containers[] = $term->tid;
-        variable_set('forum_containers', $containers);
+        config_set('forum.settings', 'forum_containers', $containers);
       }
       $form_state['values']['tid'] = $term->tid;
-      drupal_set_message(t('Created new @type %term.', array('%term' => $form_state['values']['name'], '@type' => $type)));
+      backdrop_set_message(t('Created new @type %term.', array('%term' => $form_state['values']['name'], '@type' => $type)));
       break;
     case SAVED_UPDATED:
-      drupal_set_message(t('The @type %term has been updated.', array('%term' => $form_state['values']['name'], '@type' => $type)));
+      backdrop_set_message(t('The @type %term has been updated.', array('%term' => $form_state['values']['name'], '@type' => $type)));
       // Clear the page and block caches to avoid stale data.
       cache_clear_all();
       break;
@@ -132,7 +133,7 @@ function forum_form_submit($form, &$form_state) {
  * @ingroup themeable
  */
 function theme_forum_form($variables) {
-  return drupal_render_children($variables['form']);
+  return backdrop_render_children($variables['form']);
 }
 
 /**
@@ -177,9 +178,9 @@ function forum_form_container($form, &$form_state, $edit = array()) {
     '#description' => t('Containers are displayed in ascending order by weight (containers with equal weights are displayed alphabetically).')
   );
 
-  $form['vid'] = array(
+  $form['vocabulary'] = array(
     '#type' => 'hidden',
-    '#value' => variable_get('forum_nav_vocabulary', ''),
+    '#value' => config_get('forum.settings', 'forum_nav_vocabulary'),
   );
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
@@ -219,7 +220,7 @@ function forum_confirm_delete($form, &$form_state, $tid) {
  */
 function forum_confirm_delete_submit($form, &$form_state) {
   taxonomy_term_delete($form_state['values']['tid']);
-  drupal_set_message(t('The forum %term and all sub-forums have been deleted.', array('%term' => $form_state['values']['name'])));
+  backdrop_set_message(t('The forum %term and all sub-forums have been deleted.', array('%term' => $form_state['values']['name'])));
   watchdog('content', 'forum: deleted %term and all its sub-forums.', array('%term' => $form_state['values']['name']));
 
   $form_state['redirect'] = 'admin/structure/forum';
@@ -234,28 +235,44 @@ function forum_confirm_delete_submit($form, &$form_state) {
  * @ingroup forms
  */
 function forum_admin_settings($form) {
-  $number = drupal_map_assoc(array(5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 150, 200, 250, 300, 350, 400, 500));
+  $config = config('forum.settings');
+  $number = backdrop_map_assoc(array(5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 150, 200, 250, 300, 350, 400, 500));
   $form['forum_hot_topic'] = array('#type' => 'select',
     '#title' => t('Hot topic threshold'),
-    '#default_value' => variable_get('forum_hot_topic', 15),
+    '#default_value' => $config->get('forum_hot_topic'),
     '#options' => $number,
     '#description' => t('The number of replies a topic must have to be considered "hot".'),
   );
-  $number = drupal_map_assoc(array(10, 25, 50, 75, 100));
+  $number = backdrop_map_assoc(array(10, 25, 50, 75, 100));
   $form['forum_per_page'] = array('#type' => 'select',
     '#title' => t('Topics per page'),
-    '#default_value' => variable_get('forum_per_page', 25),
+    '#default_value' => $config->get('forum_per_page'),
     '#options' => $number,
     '#description' => t('Default number of forum topics displayed per page.'),
   );
   $forder = array(1 => t('Date - newest first'), 2 => t('Date - oldest first'), 3 => t('Posts - most active first'), 4 => t('Posts - least active first'));
   $form['forum_order'] = array('#type' => 'radios',
     '#title' => t('Default order'),
-    '#default_value' => variable_get('forum_order', 1),
+    '#default_value' => $config->get('forum_order'),
     '#options' => $forder,
     '#description' => t('Default display order for topics.'),
   );
-  return system_settings_form($form);
+  
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );    
+  
+  return $form;
+}
+
+function forum_admin_settings_submit($form, $form_state) {
+  $config = config('forum.settings');
+  $config->set('forum_hot_topic', $form_state['values']['forum_hot_topic']);
+  $config->set('forum_per_page', $form_state['values']['forum_per_page']);
+  $config->set('forum_order', $form_state['values']['forum_order']);
+  $config->save();
 }
 
 /**
@@ -269,22 +286,24 @@ function forum_admin_settings($form) {
  */
 function forum_overview($form, &$form_state) {
   module_load_include('inc', 'taxonomy', 'taxonomy.admin');
-
-  $vid = variable_get('forum_nav_vocabulary', '');
+  $config = config('forum.settings');
+  $vid = $config->get('forum_nav_vocabulary');
   $vocabulary = taxonomy_vocabulary_load($vid);
   $form = taxonomy_overview_terms($form, $form_state, $vocabulary);
+  $containers = $config->get('forum_containers');
+dpm($form);
 
   foreach (element_children($form) as $key) {
     if (isset($form[$key]['#term'])) {
       $term = $form[$key]['#term'];
       $form[$key]['view']['#href'] = 'forum/' . $term['tid'];
-      if (in_array($form[$key]['#term']['tid'], variable_get('forum_containers', array()))) {
-        $form[$key]['edit']['#title'] = t('edit container');
-        $form[$key]['edit']['#href'] = 'admin/structure/forum/edit/container/' . $term['tid'];
+      if (in_array($form[$key]['#term']['tid'], $containers)) {
+        $form[$key]['operations']['#links']['edit']['title'] = t('edit container');
+        $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/container/' . $term['tid'];
       }
       else {
-        $form[$key]['edit']['#title'] = t('edit forum');
-        $form[$key]['edit']['#href'] = 'admin/structure/forum/edit/forum/' . $term['tid'];
+        $form[$key]['operations']['#links']['edit']['title'] = t('edit forum');
+        $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/forum/' . $term['tid'];
       }
     }
   }
@@ -314,7 +333,7 @@ function forum_overview($form, &$form_state) {
  */
 function _forum_parent_select($tid, $title, $child_type) {
 
-  $parents = taxonomy_get_parents($tid);
+  $parents = taxonomy_term_load_parents($tid);
   if ($parents) {
     $parent = array_shift($parents);
     $parent = $parent->tid;
@@ -323,7 +342,7 @@ function _forum_parent_select($tid, $title, $child_type) {
     $parent = 0;
   }
 
-  $vid = variable_get('forum_nav_vocabulary', '');
+  $vid = config_get('forum.settings', 'forum_nav_vocabulary');
   $children = taxonomy_get_tree($vid, $tid);
 
   // A term can't be the child of itself, nor of its children.

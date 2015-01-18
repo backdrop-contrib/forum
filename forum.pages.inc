@@ -23,8 +23,8 @@ function forum_page($forum_term = NULL) {
     $forum_term = forum_forum_load(0);
   }
 
-  $forum_per_page = variable_get('forum_per_page', 25);
-  $sortby = variable_get('forum_order', 1);
+  $forum_per_page = config_get('forum.settings', 'forum_per_page');
+  $sortby = config_get('forum.settings', 'forum_order');
 
   if (empty($forum_term->container)) {
     $topics = forum_get_topics($forum_term->tid, $sortby, $forum_per_page);

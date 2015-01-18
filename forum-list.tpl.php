@@ -33,13 +33,13 @@
  * @ingroup themeable
  */
 ?>
-<table id="forum-<?php print $forum_id; ?>">
+<table class="responsive-enabled" id="forum-<?php print $forum_id; ?>">
   <thead>
     <tr>
       <th><?php print t('Forum'); ?></th>
       <th><?php print t('Topics');?></th>
-      <th><?php print t('Posts'); ?></th>
-      <th><?php print t('Last post'); ?></th>
+      <th class="priority-low"><?php print t('Posts'); ?></th>
+      <th class="priority-low"><?php print t('Last post'); ?></th>
     </tr>
   </thead>
   <tbody>
@@ -68,8 +68,8 @@
             <a href="<?php print $forum->new_url; ?>"><?php print $forum->new_text; ?></a>
           <?php endif; ?>
         </td>
-        <td class="posts"><?php print $forum->num_posts ?></td>
-        <td class="last-reply"><?php print $forum->last_reply ?></td>
+        <td class="posts priority-low"><?php print $forum->num_posts ?></td>
+        <td class="last-reply priority-low"><?php print $forum->last_reply ?></td>
       <?php endif; ?>
     </tr>
   <?php endforeach; ?>
