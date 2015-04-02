@@ -291,7 +291,6 @@ function forum_overview($form, &$form_state) {
   $vocabulary = taxonomy_vocabulary_load($vid);
   $form = taxonomy_overview_terms($form, $form_state, $vocabulary);
   $containers = $config->get('forum_containers');
-dpm($form);
 
   foreach (element_children($form) as $key) {
     if (isset($form[$key]['#term'])) {
