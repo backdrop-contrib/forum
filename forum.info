@@ -1,8 +1,12 @@
 name = Forum
 description = Provides discussion forums.
+type = module
+
 dependencies[] = taxonomy
 dependencies[] = comment
+
 package = Forum
+
 version = VERSION
 backdrop = 1.x
 
