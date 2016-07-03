@@ -41,19 +41,6 @@ function forum_theme() {
  * Implements hook_menu().
  */
 function forum_menu() {
-  $items['forum'] = array(
-    'title' => 'Forums',
-    'page callback' => 'forum_page',
-    'access arguments' => array('access content'),
-    'file' => 'forum.pages.inc',
-  );
-  $items['forum/%forum_forum'] = array(
-    'title' => 'Forums',
-    'page callback' => 'forum_page',
-    'page arguments' => array(1),
-    'access arguments' => array('access content'),
-    'file' => 'forum.pages.inc',
-  );
   $items['admin/structure/forum'] = array(
     'title' => 'Forums',
     'description' => 'Control forum hierarchy settings.',
@@ -118,7 +105,7 @@ function forum_menu() {
 function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   global $user;
 
-  // Add action link to 'node/add/forum' on 'forum' sub-pages.
+/*   // Add action link to 'node/add/forum' on 'forum' sub-pages.
   if ($root_path == 'forum' || $root_path == 'forum/%') {
     $tid = (isset($router_item['page_arguments'][0]) ? $router_item['page_arguments'][0]->tid : 0);
     $forum_term = forum_forum_load($tid);
@@ -163,7 +150,7 @@ function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
       $data['actions']['output'] = array_merge($data['actions']['output'], $links);
     }
   }
-}
+ */}
 
 /**
  * Implements hook_entity_info_alter().
@@ -751,7 +738,6 @@ function forum_forum_load($tid = NULL) {
 
   // Load parent terms.
   $forum_term->parents = taxonomy_term_load_parents_all($forum_term->tid);
-
   // Load the tree below.
   $forums = array();
   $_forums = taxonomy_get_tree($vid, $tid);
@@ -818,6 +804,7 @@ function forum_forum_load($tid = NULL) {
 
   // Cache the result, and return the tree.
   $forum_term->forums = $forums;
+
   $cache[$tid] = $forum_term;
   return $forum_term;
 }
@@ -1348,4 +1335,38 @@ function forum_rdf_mapping() {
       ),
     ),
   );
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function forum_autoload_info() {
+  return array(
+    'taxonomy_term_data_handler_field_last_reply' => 'views/taxonomy_term_data_handler_field_last_reply.inc',
+    'taxonomy_term_data_handler_field_posts' => 'views/taxonomy_term_data_handler_field_posts.inc',
+    'taxonomy_term_data_handler_field_topics' => 'views/taxonomy_term_data_handler_field_topics.inc',
+    'taxonomy_term_data_handler_field_container' => 'views/taxonomy_term_data_handler_field_container.inc',
+    'taxonomy_term_data_handler_filter_is_container' => 'views/taxonomy_term_data_handler_filter_is_container.inc',
+  );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function forum_views_api() {
+  return array(
+    'api' => 3,
+    'path' => backdrop_get_path('module', 'forum') . '/views',
+  );
+}
+
+/**
+ * Get cached list of containers.
+ */
+function forum_get_containers() {
+  $containers = &backdrop_static(__FUNCTION__, array());
+  if (empty($containers)) {
+    $containers = config_get('forum.settings', 'forum_containers');
+  }
+  return $containers;
 }
