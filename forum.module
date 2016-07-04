@@ -1370,3 +1370,14 @@ function forum_get_containers() {
   }
   return $containers;
 }
+
+/**
+ * Implements hook_config_info().
+ */
+function forum_config_info() {
+  $prefixes['forum.settings'] = array(
+    'label' => t('Forum settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
