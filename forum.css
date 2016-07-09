@@ -52,3 +52,8 @@
 #forum .icon .topic-status-closed {
   background-position: -120px 0;
 }
+
+.indent-1 {padding-left:20px;}
+.indent-2 {padding-left:30px;}
+.indent-3 {padding-left:40px;}
+.indent-4 {padding-left:50px;}

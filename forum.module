@@ -34,6 +34,12 @@ function forum_theme() {
       'render element' => 'form',
       'file' => 'forum.admin.inc',
     ),
+    'views_view_table__forums' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-table--forums',
+      'base hook' => 'views_view_table',
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
+    ),
   );
 }
 
@@ -683,7 +689,10 @@ function forum_form($node, $form_state) {
     // If editing, give option to leave shadows.
     $shadow = (count($forum_terms) > 1);
     $form['shadow'] = array('#type' => 'checkbox', '#title' => t('Leave shadow copy'), '#default_value' => $shadow, '#description' => t('If you move this topic, you can leave a link in the old forum to the new forum.'));
-    $form['forum_tid'] = array('#type' => 'value', '#value' => $node->forum_tid);
+    $form['forum_tid'] = array(
+      '#type' => 'value',
+      '#value' => isset($node->forum_tid) ? $node->forum_tid : NULL,
+    );
   }
 
   return $form;
@@ -1345,8 +1354,6 @@ function forum_autoload_info() {
     'taxonomy_term_data_handler_field_last_reply' => 'views/taxonomy_term_data_handler_field_last_reply.inc',
     'taxonomy_term_data_handler_field_posts' => 'views/taxonomy_term_data_handler_field_posts.inc',
     'taxonomy_term_data_handler_field_topics' => 'views/taxonomy_term_data_handler_field_topics.inc',
-    'taxonomy_term_data_handler_field_container' => 'views/taxonomy_term_data_handler_field_container.inc',
-    'taxonomy_term_data_handler_filter_is_container' => 'views/taxonomy_term_data_handler_filter_is_container.inc',
   );
 }
 
@@ -1358,17 +1365,6 @@ function forum_views_api() {
     'api' => 3,
     'path' => backdrop_get_path('module', 'forum') . '/views',
   );
-}
-
-/**
- * Get cached list of containers.
- */
-function forum_get_containers() {
-  $containers = &backdrop_static(__FUNCTION__, array());
-  if (empty($containers)) {
-    $containers = config_get('forum.settings', 'forum_containers');
-  }
-  return $containers;
 }
 
 /**

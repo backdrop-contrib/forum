@@ -55,6 +55,16 @@ function forum_views_data_alter(&$data) {
     ),
   );
 
+/*   // Add reply link field
+  $data['taxonomy_term_data']['forum_name'] = array(
+    'title' => t('Forum name'),
+    'help' => t('Forum name'),
+    'field' => array(
+      'field' => 'name',
+      'handler' => 'taxonomy_term_data_handler_field_forum_name',
+    ),
+  );
+ */
     // Add reply link field
   $data['taxonomy_term_data']['forum'] = array(
     'title' => t('Forum'),
