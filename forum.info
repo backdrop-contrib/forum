@@ -4,6 +4,7 @@ type = module
 
 dependencies[] = taxonomy
 dependencies[] = comment
+dependencies[] = views_term_hierarchy
 
 package = Forum
 
