@@ -40,6 +40,12 @@ function forum_theme() {
       'base hook' => 'views_view_table',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
+    'views_view_field__forums__description' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-field--forums--description',
+      'base hook' => 'views_view_field',
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
+    ),
   );
 }
 
