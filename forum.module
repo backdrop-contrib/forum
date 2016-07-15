@@ -66,19 +66,10 @@ function forum_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
-  $items['admin/structure/forum/add/container'] = array(
-    'title' => 'Add container',
-    'page callback' => 'forum_form_main',
-    'page arguments' => array('container'),
-    'access arguments' => array('administer forums'),
-    'type' => MENU_LOCAL_ACTION,
-    'parent' => 'admin/structure/forum',
-    'file' => 'forum.admin.inc',
-  );
-  $items['admin/structure/forum/add/forum'] = array(
+  $items['admin/structure/forum/add'] = array(
     'title' => 'Add forum',
     'page callback' => 'forum_form_main',
-    'page arguments' => array('forum'),
+    'page arguments' => array(3),
     'access arguments' => array('administer forums'),
     'type' => MENU_LOCAL_ACTION,
     'parent' => 'admin/structure/forum',
@@ -94,17 +85,10 @@ function forum_menu() {
     'parent' => 'admin/structure/forum',
     'file' => 'forum.admin.inc',
   );
-  $items['admin/structure/forum/edit/container/%taxonomy_term'] = array(
-    'title' => 'Edit container',
-    'page callback' => 'forum_form_main',
-    'page arguments' => array('container', 5),
-    'access arguments' => array('administer forums'),
-    'file' => 'forum.admin.inc',
-  );
-  $items['admin/structure/forum/edit/forum/%taxonomy_term'] = array(
+  $items['admin/structure/forum/%taxonomy_term'] = array(
     'title' => 'Edit forum',
     'page callback' => 'forum_form_main',
-    'page arguments' => array('forum', 5),
+    'page arguments' => array(3),
     'access arguments' => array('administer forums'),
     'file' => 'forum.admin.inc',
   );
@@ -244,10 +228,7 @@ function forum_node_view($node, $view_mode) {
 function forum_node_validate($node, $form) {
   if (_forum_node_check_node_type($node)) {
     $langcode = $form['taxonomy_forums']['#language'];
-    // vocabulary is selected, not a "container" term.
     if (!empty($node->taxonomy_forums[$langcode])) {
-      // Extract the node's proper topic ID.
-      $containers = config_get('forum.settings', 'forum_containers');
       foreach ($node->taxonomy_forums[$langcode] as $delta => $item) {
         // If no term was selected (e.g. when no terms exist yet), remove the
         // item.
@@ -259,13 +240,6 @@ function forum_node_validate($node, $form) {
         if (!$term) {
           form_set_error('taxonomy_forums', t('Select a forum.'));
           continue;
-        }
-        $used = db_query_range('SELECT 1 FROM {taxonomy_term_data} WHERE tid = :tid AND vocabulary = :vid',0 , 1, array(
-          ':tid' => $term->tid,
-          ':vid' => $term->vocabulary,
-        ))->fetchField();
-        if ($used && in_array($term->tid, $containers)) {
-          form_set_error('taxonomy_forums', t('The item %forum is a forum container, not a forum. Select one of the forums below instead.', array('%forum' => $term->name)));
         }
       }
     }
@@ -424,19 +398,6 @@ function forum_permission() {
 }
 
 /**
- * Implements hook_taxonomy_term_delete().
- */
-function forum_taxonomy_term_delete($term) {
-  // For containers, remove the tid from the forum_containers variable.
-  $containers = config_get('forum.settings', 'forum_containers');
-  $key = array_search($term->tid, $containers);
-  if ($key !== FALSE) {
-    unset($containers[$key]);
-  }
-  config_set('forum.settings', 'forum_containers', $containers);
-}
-
-/**
  * Implements hook_comment_publish().
  *
  * This actually handles the insertion and update of published nodes since
@@ -553,9 +514,8 @@ function forum_form_taxonomy_form_vocabulary_alter(&$form, &$form_state, $form_i
       '#markup' => t('This is the designated forum vocabulary. Some of the normal vocabulary options have been removed.'),
       '#weight' => -1,
     );
-    // Forum's vocabulary always has single hierarchy. Forums and containers
-    // have only one parent or no parent for root items. By default this value
-    // is 0.
+    // Forum's vocabulary always has single hierarchy. Forums have only one 
+    // parent or no parent for root items. By default this value is 0.
     $form['hierarchy']['#value'] = 1;
     // Do not allow to delete forum's vocabulary.
     $form['actions']['delete']['#access'] = FALSE;
@@ -746,11 +706,6 @@ function forum_forum_load($tid = NULL) {
     );
   }
 
-  // Determine if the requested term is a container.
-  if (!$forum_term->tid || in_array($forum_term->tid, config_get('forum.settings', 'forum_containers'))) {
-    $forum_term->container = 1;
-  }
-
   // Load parent terms.
   $forum_term->parents = taxonomy_term_load_parents_all($forum_term->tid);
   // Load the tree below.
@@ -773,11 +728,6 @@ function forum_forum_load($tid = NULL) {
   }
 
   foreach ($_forums as $forum) {
-    // Determine if the child term is a container.
-    if (in_array($forum->tid, config_get('forum.settings', 'forum_containers'))) {
-      $forum->container = 1;
-    }
-
     // Merge in the topic and post counters.
     if (!empty($counts[$forum->tid])) {
       $forum->num_topics = $counts[$forum->tid]->topic_count;
@@ -976,263 +926,6 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
 }
 
 /**
- * Preprocesses variables for forums.tpl.php.
- *
- * @param $variables
- *   An array containing the following elements:
- *   - forums: An array of all forum objects to display for the given taxonomy
- *     term ID. If tid = 0 then all the top-level forums are displayed.
- *   - topics: An array of all the topics in the current forum.
- *   - parents: An array of taxonomy term objects that are ancestors of the
- *     current term ID.
- *   - tid: Taxonomy term ID of the current forum.
- *   - sortby: One of the following integers indicating the sort criteria:
- *     - 1: Date - newest first.
- *     - 2: Date - oldest first.
- *     - 3: Posts with the most comments first.
- *     - 4: Posts with the least comments first.
- *   - forum_per_page: The maximum number of topics to display per page.
- *
- * @see forums.tpl.php
- */
-function template_preprocess_forums(&$variables) {
-  global $user;
-
-  $vid = config_get('forum.settings', 'forum_nav_vocabulary');
-  $vocabulary = taxonomy_vocabulary_load($vid);
-  $title = !empty($vocabulary->name) ? $vocabulary->name : '';
-
-  // Breadcrumb navigation:
-  $breadcrumb[] = l(t('Home'), NULL);
-  if ($variables['tid']) {
-    $breadcrumb[] = l($vocabulary->name, 'forum');
-  }
-  if ($variables['parents']) {
-    $variables['parents'] = array_reverse($variables['parents']);
-    foreach ($variables['parents'] as $p) {
-      if ($p->tid == $variables['tid']) {
-        $title = $p->name;
-      }
-      else {
-        $breadcrumb[] = l($p->name, 'forum/' . $p->tid);
-      }
-    }
-  }
-  backdrop_set_breadcrumb($breadcrumb);
-  backdrop_set_title($title);
-
-  if ($variables['forums_defined'] = count($variables['forums']) || count($variables['parents'])) {
-    if (!empty($variables['forums'])) {
-      $variables['forums'] = theme('forum_list', $variables);
-    }
-    else {
-      $variables['forums'] = '';
-    }
-
-    if ($variables['tid'] && !in_array($variables['tid'], config_get('forum.settings', 'forum_containers'))) {
-      $variables['topics'] = theme('forum_topic_list', $variables);
-      backdrop_add_feed('taxonomy/term/' . $variables['tid'] . '/feed', 'RSS - ' . $title);
-    }
-    else {
-      $variables['topics'] = '';
-    }
-
-    // Provide separate template suggestions based on what's being output. Topic id is also accounted for.
-    // Check both variables to be safe then the inverse. Forums with topic ID's take precedence.
-    if ($variables['forums'] && !$variables['topics']) {
-      $variables['theme_hook_suggestions'][] = 'forums__containers';
-      $variables['theme_hook_suggestions'][] = 'forums__' . $variables['tid'];
-      $variables['theme_hook_suggestions'][] = 'forums__containers__' . $variables['tid'];
-    }
-    elseif (!$variables['forums'] && $variables['topics']) {
-      $variables['theme_hook_suggestions'][] = 'forums__topics';
-      $variables['theme_hook_suggestions'][] = 'forums__' . $variables['tid'];
-      $variables['theme_hook_suggestions'][] = 'forums__topics__' . $variables['tid'];
-    }
-    else {
-      $variables['theme_hook_suggestions'][] = 'forums__' . $variables['tid'];
-    }
-
-  }
-  else {
-    backdrop_set_title(t('No forums defined'));
-    $variables['forums'] = '';
-    $variables['topics'] = '';
-  }
-}
-
-/**
- * Preprocesses variables for forum-list.tpl.php.
- *
- * @param $variables
- *   An array containing the following elements:
- *   - forums: An array of all forum objects to display for the given taxonomy
- *     term ID. If tid = 0 then all the top-level forums are displayed.
- *   - parents: An array of taxonomy term objects that are ancestors of the
- *     current term ID.
- *   - tid: Taxonomy term ID of the current forum.
- *
- * @see forum-list.tpl.php
- * @see theme_forum_list()
- */
-function template_preprocess_forum_list(&$variables) {
-  global $user;
-  $row = 0;
-  // Sanitize each forum so that the template can safely print the data.
-  foreach ($variables['forums'] as $id => $forum) {
-    $variables['forums'][$id]->description = !empty($forum->description) ? filter_xss_admin($forum->description) : '';
-    $variables['forums'][$id]->link = url("forum/$forum->tid");
-    $variables['forums'][$id]->name = check_plain($forum->name);
-    $variables['forums'][$id]->is_container = !empty($forum->container);
-    $variables['forums'][$id]->zebra = $row % 2 == 0 ? 'odd' : 'even';
-    $row++;
-
-    $variables['forums'][$id]->new_text = '';
-    $variables['forums'][$id]->new_url = '';
-    $variables['forums'][$id]->new_topics = 0;
-    $variables['forums'][$id]->old_topics = $forum->num_topics;
-    $variables['forums'][$id]->icon_class = 'default';
-    $variables['forums'][$id]->icon_title = t('No new posts');
-    if ($user->uid) {
-      $variables['forums'][$id]->new_topics = _forum_topics_unread($forum->tid, $user->uid);
-      if ($variables['forums'][$id]->new_topics) {
-        $variables['forums'][$id]->new_text = format_plural($variables['forums'][$id]->new_topics, '1 new', '@count new');
-        $variables['forums'][$id]->new_url = url("forum/$forum->tid", array('fragment' => 'new'));
-        $variables['forums'][$id]->icon_class = 'new';
-        $variables['forums'][$id]->icon_title = t('New posts');
-      }
-      $variables['forums'][$id]->old_topics = $forum->num_topics - $variables['forums'][$id]->new_topics;
-    }
-    $variables['forums'][$id]->last_reply = theme('forum_submitted', array('topic' => $forum->last_post));
-  }
-  // Give meaning to $tid for themers. $tid actually stands for term id.
-  $variables['forum_id'] = $variables['tid'];
-  unset($variables['tid']);
-}
-
-/**
- * Preprocesses variables for forum-topic-list.tpl.php.
- *
- * @param $variables
- *   An array containing the following elements:
- *   - tid: Taxonomy term ID of the current forum.
- *   - topics: An array of all the topics in the current forum.
- *   - forum_per_page: The maximum number of topics to display per page.
- *
- * @see forum-topic-list.tpl.php
- * @see theme_forum_topic_list()
- */
-function template_preprocess_forum_topic_list(&$variables) {
-  global $forum_topic_list_header;
-
-  // Create the tablesorting header.
-  $ts = tablesort_init($forum_topic_list_header);
-  $header = '';
-  foreach ($forum_topic_list_header as $cell) {
-    $cell = tablesort_header($cell, $forum_topic_list_header, $ts);
-    $header .= _theme_table_cell($cell, TRUE);
-  }
-  $variables['header'] = $header;
-
-  if (!empty($variables['topics'])) {
-    $row = 0;
-    foreach ($variables['topics'] as $id => $topic) {
-      $variables['topics'][$id]->icon = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
-      $variables['topics'][$id]->zebra = $row % 2 == 0 ? 'odd' : 'even';
-      $row++;
-
-      // We keep the actual tid in forum table, if it's different from the
-      // current tid then it means the topic appears in two forums, one of
-      // them is a shadow copy.
-      if ($variables['tid'] != $topic->forum_tid) {
-        $variables['topics'][$id]->moved = TRUE;
-        $variables['topics'][$id]->title = check_plain($topic->title);
-        $variables['topics'][$id]->message = l(t('This topic has been moved'), "forum/$topic->forum_tid");
-      }
-      else {
-        $variables['topics'][$id]->moved = FALSE;
-        $variables['topics'][$id]->title = l($topic->title, "node/$topic->nid");
-        $variables['topics'][$id]->message = '';
-      }
-      $variables['topics'][$id]->created = theme('forum_submitted', array('topic' => $topic));
-      $variables['topics'][$id]->last_reply = theme('forum_submitted', array('topic' => isset($topic->last_reply) ? $topic->last_reply : NULL));
-
-      $variables['topics'][$id]->new_text = '';
-      $variables['topics'][$id]->new_url = '';
-      if ($topic->new_replies) {
-        $variables['topics'][$id]->new_text = format_plural($topic->new_replies, '1 new', '@count new');
-        $variables['topics'][$id]->new_url = url("node/$topic->nid", array('query' => comment_new_page_count($topic->comment_count, $topic->new_replies, $topic), 'fragment' => 'new'));
-      }
-
-    }
-  }
-  else {
-    // Make this safe for the template.
-    $variables['topics'] = array();
-  }
-  // Give meaning to $tid for themers. $tid actually stands for term id.
-  $variables['topic_id'] = $variables['tid'];
-  unset($variables['tid']);
-
-  $variables['pager'] = theme('pager');
-}
-
-/**
- * Preprocesses variables for forum-icon.tpl.php.
- *
- * @param $variables
- *   An array containing the following elements:
- *   - new_posts: Indicates whether or not the topic contains new posts.
- *   - num_posts: The total number of posts in all topics.
- *   - comment_mode: An integer indicating whether comments are open, closed,
- *     or hidden.
- *   - sticky: Indicates whether the topic is sticky.
- *   - first_new: Indicates whether this is the first topic with new posts.
- *
- * @see forum-icon.tpl.php
- * @see theme_forum_icon()
- */
-function template_preprocess_forum_icon(&$variables) {
-  $variables['hot_threshold'] = config_get('forum.settings', 'forum_hot_topic');
-  if ($variables['num_posts'] > $variables['hot_threshold']) {
-    $variables['icon_class'] = $variables['new_posts'] ? 'hot-new' : 'hot';
-    $variables['icon_title'] = $variables['new_posts'] ? t('Hot topic, new comments') : t('Hot topic');
-  }
-  else {
-    $variables['icon_class'] = $variables['new_posts'] ? 'new' : 'default';
-    $variables['icon_title'] = $variables['new_posts'] ? t('New comments') : t('Normal topic');
-  }
-
-  if ($variables['comment_mode'] == COMMENT_NODE_CLOSED || $variables['comment_mode'] == COMMENT_NODE_HIDDEN) {
-    $variables['icon_class'] = 'closed';
-    $variables['icon_title'] = t('Closed topic');
-  }
-
-  if ($variables['sticky'] == 1) {
-    $variables['icon_class'] = 'sticky';
-    $variables['icon_title'] = t('Sticky topic');
-  }
-}
-
-/**
- * Preprocesses variables for forum-submitted.tpl.php.
- *
- * The submission information will be displayed in the forum list and topic
- * list.
- *
- * @param $variables
- *   An array containing the following elements:
- *   - topic: The topic object.
- *
- * @see forum-submitted.tpl.php
- * @see theme_forum_submitted()
- */
-function template_preprocess_forum_submitted(&$variables) {
-  $variables['author'] = isset($variables['topic']->uid) ? theme('username', array('account' => $variables['topic'])) : '';
-  $variables['time'] = isset($variables['topic']->created) ? format_interval(REQUEST_TIME - $variables['topic']->created) : '';
-}
-
-/**
  * Gets the last time the user viewed a node.
  *
  * @param $nid
@@ -1337,7 +1030,6 @@ function forum_rdf_mapping() {
       'mapping' => array(
         'rdftype' => array('sioc:Post', 'sioct:BoardPost'),
         'taxonomy_forums' => array(
-          'predicates' => array('sioc:has_container'),
           'type' => 'rel',
         ),
       ),
@@ -1346,7 +1038,7 @@ function forum_rdf_mapping() {
       'type' => 'taxonomy_term',
       'bundle' => 'forums',
       'mapping' => array(
-        'rdftype' => array('sioc:Container', 'sioc:Forum'),
+        'rdftype' => array('sioc:Forum'),
       ),
     ),
   );

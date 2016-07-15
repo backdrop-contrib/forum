@@ -250,7 +250,6 @@ function forum_schema() {
 }
 
 function forum_update_1000() {
-  
   $config = config('forum.settings');
   $config->set('forum_nav_vocabulary', update_variable_get('forum_nav_vocabulary', ''));
   $config->set('forum_containers', update_variable_get('forum_containers', array()));
@@ -268,7 +267,13 @@ function forum_update_1000() {
   update_variable_del('forum_block_num_active');
   update_variable_del('forum_block_num_new');
   update_variable_del('node_options_forum');
+}
 
+function forum_update_1001() {
+  // Delete the container settings.
+  $config = config('forum.settings');
+  $config->clear('forum_containers');
+  $config->save();
 }
 
 function forum_update_last_removed() {

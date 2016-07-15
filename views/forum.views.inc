@@ -9,25 +9,6 @@
  * Implements hook_views_data_alter().
  */
 function forum_views_data_alter(&$data) {
-  $data['taxonomy_term_data']['is_container'] = array(
-    'title' => t('Forum is container'),
-    'help' => t('Filters out unpublished forum_posts if the current user cannot view them.'),
-    'filter' => array(
-      'field' => 'tid',
-      'handler' => 'taxonomy_term_data_handler_filter_is_container',
-      'label' => t('Published or admin'),
-    ),
-  );
-
-  // Add reply link field
-  $data['taxonomy_term_data']['container'] = array(
-    'title' => t('Container'),
-    'help' => t('Provide a forum\'s container'),
-    'field' => array(
-      'handler' => 'taxonomy_term_data_handler_field_container',
-    ),
-  );
-
   // Add reply link field
   $data['taxonomy_term_data']['num_posts'] = array(
     'title' => t('Total posts'),
@@ -55,17 +36,7 @@ function forum_views_data_alter(&$data) {
     ),
   );
 
-/*   // Add reply link field
-  $data['taxonomy_term_data']['forum_name'] = array(
-    'title' => t('Forum name'),
-    'help' => t('Forum name'),
-    'field' => array(
-      'field' => 'name',
-      'handler' => 'taxonomy_term_data_handler_field_forum_name',
-    ),
-  );
- */
-    // Add reply link field
+  // Add a relationship handler.
   $data['taxonomy_term_data']['forum'] = array(
     'title' => t('Forum'),
     'help' => t('Provide a forum'),

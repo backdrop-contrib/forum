@@ -6,32 +6,23 @@
  */
 
 /**
- * Page callback: Returns a form for creating a new forum or container.
+ * Page callback: Returns a form for creating a new forum.
  *
- * @param $type
- *   What is being added. Possible values are 'forum' and 'container'.
  * @param $edit
  *   (optional) Associative array containing a forum term to be edited.
  *   Defaults to an empty array.
  *
  * @return
- *   A form for creating a new forum or container.
+ *   A form for creating a new forum.
  *
  * @see forum_menu()
  */
-function forum_form_main($type, $edit = array()) {
+function forum_form_main($edit = array()) {
   $edit = (array) $edit;
   if ((isset($_POST['op']) && $_POST['op'] == t('Delete')) || !empty($_POST['confirm'])) {
     return backdrop_get_form('forum_confirm_delete', $edit['tid']);
   }
-  switch ($type) {
-    case 'forum':
-      return backdrop_get_form('forum_form_forum', $edit);
-      break;
-    case 'container':
-      return backdrop_get_form('forum_form_container', $edit);
-      break;
-  }
+  return backdrop_get_form('forum_form_forum', $edit);
 }
 
 /**
@@ -64,7 +55,7 @@ function forum_form_forum($form, &$form_state, $edit = array()) {
     '#description' => t('Description and guidelines for discussions within this forum.'),
   );
   $form['parent']['#tree'] = TRUE;
-  $form['parent'][0] = _forum_parent_select($edit['tid'], t('Parent'), 'forum');
+  $form['parent'][0] = _forum_parent_select($edit['tid'], t('Parent'));
   $form['weight'] = array('#type' => 'weight',
     '#title' => t('Weight'),
     '#default_value' => $edit['weight'],
@@ -85,33 +76,19 @@ function forum_form_forum($form, &$form_state, $edit = array()) {
 }
 
 /**
- * Form submission handler for forum_form_forum() and forum_form_container().
+ * Form submission handler for forum_form_forum().
  */
 function forum_form_submit($form, &$form_state) {
-  if ($form['form_id']['#value'] == 'forum_form_container') {
-    $container = TRUE;
-    $type = t('forum container');
-  }
-  else {
-    $container = FALSE;
-    $type = t('forum');
-  }
-
   $term = entity_create('taxonomy_term', $form_state['values']);
 
   $status = taxonomy_term_save($term);
   switch ($status) {
     case SAVED_NEW:
-      if ($container) {
-        $containers = config_get('forum.settings', 'forum_containers');
-        $containers[] = $term->tid;
-        config_set('forum.settings', 'forum_containers', $containers);
-      }
       $form_state['values']['tid'] = $term->tid;
-      backdrop_set_message(t('Created new @type %term.', array('%term' => $form_state['values']['name'], '@type' => $type)));
+      backdrop_set_message(t('Created new forum %term.', array('%term' => $form_state['values']['name'])));
       break;
     case SAVED_UPDATED:
-      backdrop_set_message(t('The @type %term has been updated.', array('%term' => $form_state['values']['name'], '@type' => $type)));
+      backdrop_set_message(t('The forum %term has been updated.', array('%term' => $form_state['values']['name'])));
       // Clear the page and block caches to avoid stale data.
       cache_clear_all();
       break;
@@ -137,67 +114,6 @@ function theme_forum_form($variables) {
 }
 
 /**
- * Form constructor for adding and editing forum containers.
- *
- * @param $edit
- *   (optional) Associative array containing a container term to be added or edited.
- *   Defaults to an empty array.
- *
- * @see forum_form_submit()
- * @ingroup forms
- */
-function forum_form_container($form, &$form_state, $edit = array()) {
-  $edit += array(
-    'name' => '',
-    'description' => '',
-    'tid' => NULL,
-    'weight' => 0,
-  );
-  // Handle a delete operation.
-  $form['name'] = array(
-    '#title' => t('Container name'),
-    '#type' => 'textfield',
-    '#default_value' => $edit['name'],
-    '#maxlength' => 255,
-    '#description' => t('Short but meaningful name for this collection of related forums.'),
-    '#required' => TRUE
-  );
-
-  $form['description'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Description'),
-    '#default_value' => $edit['description'],
-    '#description' => t('Description and guidelines for forums within this container.')
-  );
-  $form['parent']['#tree'] = TRUE;
-  $form['parent'][0] = _forum_parent_select($edit['tid'], t('Parent'), 'container');
-  $form['weight'] = array(
-    '#type' => 'weight',
-    '#title' => t('Weight'),
-    '#default_value' => $edit['weight'],
-    '#description' => t('Containers are displayed in ascending order by weight (containers with equal weights are displayed alphabetically).')
-  );
-
-  $form['vocabulary'] = array(
-    '#type' => 'hidden',
-    '#value' => config_get('forum.settings', 'forum_nav_vocabulary'),
-  );
-  $form['actions'] = array('#type' => 'actions');
-  $form['actions']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save')
-  );
-  if ($edit['tid']) {
-    $form['actions']['delete'] = array('#type' => 'submit', '#value' => t('Delete'));
-    $form['tid'] = array('#type' => 'value', '#value' => $edit['tid']);
-  }
-  $form['#submit'][] = 'forum_form_submit';
-  $form['#theme'] = 'forum_form';
-
-  return $form;
-}
-
-/**
  * Form constructor for confirming deletion of a forum taxonomy term.
  *
  * @param $tid
@@ -212,7 +128,7 @@ function forum_confirm_delete($form, &$form_state, $tid) {
   $form['tid'] = array('#type' => 'value', '#value' => $tid);
   $form['name'] = array('#type' => 'value', '#value' => $term->name);
 
-  return confirm_form($form, t('Are you sure you want to delete the forum %name?', array('%name' => $term->name)), 'admin/structure/forum', t('Deleting a forum or container will also delete its sub-forums, if any. To delete posts in this forum, visit <a href="@content">content administration</a> first. This action cannot be undone.', array('@content' => url('admin/content'))), t('Delete'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to delete the forum %name?', array('%name' => $term->name)), 'admin/structure/forum', t('Deleting a forum will also delete its sub-forums, if any. To delete posts in this forum, visit <a href="@content">content administration</a> first. This action cannot be undone.', array('@content' => url('admin/content'))), t('Delete'), t('Cancel'));
 }
 
 /**
@@ -278,8 +194,7 @@ function forum_admin_settings_submit($form, $form_state) {
 /**
  * Form constructor for the forum overview form.
  *
- * Returns a form for controlling the hierarchy of existing forums and
- * containers.
+ * Returns a form for controlling the hierarchy of existing forums.
  *
  * @see forum_menu()
  * @ingroup forms
@@ -290,20 +205,13 @@ function forum_overview($form, &$form_state) {
   $vid = $config->get('forum_nav_vocabulary');
   $vocabulary = taxonomy_vocabulary_load($vid);
   $form = taxonomy_overview_terms($form, $form_state, $vocabulary);
-  $containers = $config->get('forum_containers');
 
   foreach (element_children($form) as $key) {
     if (isset($form[$key]['#term'])) {
       $term = $form[$key]['#term'];
       $form[$key]['view']['#href'] = 'forum/' . $term['tid'];
-      if (in_array($form[$key]['#term']['tid'], $containers)) {
-        $form[$key]['operations']['#links']['edit']['title'] = t('edit container');
-        $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/container/' . $term['tid'];
-      }
-      else {
-        $form[$key]['operations']['#links']['edit']['title'] = t('edit forum');
-        $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/forum/' . $term['tid'];
-      }
+      $form[$key]['operations']['#links']['edit']['title'] = t('edit forum');
+      $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/forum/' . $term['tid'];
     }
   }
 
@@ -313,7 +221,7 @@ function forum_overview($form, &$form_state) {
   // The form needs to have submit and validate handlers set explicitly.
   $form['#theme'] = 'taxonomy_overview_terms';
   $form['#submit'] = array('taxonomy_overview_terms_submit'); // Use the existing taxonomy overview submit handler.
-  $form['#empty_text'] = t('No containers or forums available. <a href="@container">Add container</a> or <a href="@forum">Add forum</a>.', array('@container' => url('admin/structure/forum/add/container'), '@forum' => url('admin/structure/forum/add/forum')));
+  $form['#empty_text'] = t('No forums available. <a href="@forum">Add forum</a>.', array('@forum' => url('admin/structure/forum/add/forum')));
   return $form;
 }
 
@@ -324,8 +232,6 @@ function forum_overview($form, &$form_state) {
  *   ID of the term that is being added or edited.
  * @param $title
  *   Title for the select box.
- * @param $child_type
- *   Whether the child is a forum or a container.
  *
  * @return
  *   A select form element.
@@ -359,12 +265,7 @@ function _forum_parent_select($tid, $title, $child_type) {
       }
     }
   }
-  if ($child_type == 'container') {
-    $description = t('Containers are usually placed at the top (root) level, but may also be placed inside another container or forum.');
-  }
-  elseif ($child_type == 'forum') {
-    $description = t('Forums may be placed at the top (root) level, or inside another container or forum.');
-  }
+  $description = t('Forums may be placed at the top (root) level, or inside another forum.');
 
   return array('#type' => 'select', '#title' => $title, '#default_value' => $parent, '#options' => $options, '#description' => $description, '#required' => TRUE);
 }

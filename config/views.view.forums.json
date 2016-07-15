@@ -365,13 +365,7 @@
                 },
                 "title": "Forum list",
                 "style_options": {
-                    "grouping": [
-                        {
-                            "field": "container",
-                            "rendered": 1,
-                            "rendered_strip": 0
-                        }
-                    ],
+                    "grouping": [],
                     "row_class": "",
                     "default_row_class": 1,
                     "row_class_special": 1,
@@ -380,14 +374,21 @@
                     "caption": "",
                     "summary": "",
                     "columns": {
+                        "tid": "tid",
                         "name": "name",
                         "description": "name",
-                        "container": "container",
                         "num_posts": "num_posts",
                         "num_topics": "num_topics",
                         "last_reply": "last_reply"
                     },
                     "info": {
+                        "tid": {
+                            "sortable": 0,
+                            "default_sort_order": "asc",
+                            "align": "",
+                            "separator": "",
+                            "empty_column": 0
+                        },
                         "name": {
                             "sortable": 0,
                             "default_sort_order": "asc",
@@ -396,11 +397,6 @@
                             "empty_column": 0
                         },
                         "description": {
-                            "align": "",
-                            "separator": "",
-                            "empty_column": 0
-                        },
-                        "container": {
                             "align": "",
                             "separator": "",
                             "empty_column": 0
