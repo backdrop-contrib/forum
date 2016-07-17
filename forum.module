@@ -25,6 +25,7 @@ function forum_theme() {
     'forum_icon' => array(
       'template' => 'forum-icon',
       'variables' => array('new_posts' => NULL, 'num_posts' => 0, 'comment_mode' => 0, 'sticky' => 0, 'first_new' => FALSE),
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
     'forum_submitted' => array(
       'template' => 'forum-submitted',
@@ -43,6 +44,18 @@ function forum_theme() {
     'views_view_field__forums__description' => array(
       'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
       'template' => 'views-view-field--forums--description',
+      'base hook' => 'views_view_field',
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
+    ),
+    'views_view_field__forums__name' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-field--forums--name',
+      'base hook' => 'views_view_field',
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
+    ),
+    'views_view_field__subforum__title' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-field--subforum--title',
       'base hook' => 'views_view_field',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
@@ -447,7 +460,7 @@ function forum_field_storage_pre_insert($entity_type, $entity, &$skip_fields) {
           'nid' => $entity->nid,
           'title' => $entity->title,
           'tid' => $item['tid'],
-          'sticky' => $entity->sticky,
+          'sticky' => (int) $entity->sticky,
           'created' => $entity->created,
           'comment_count' => 0,
           'last_comment_timestamp' => $entity->created,
@@ -818,45 +831,23 @@ function _forum_topics_unread($term, $uid) {
  * @return
  *   A list of all the topics in a forum.
  */
-function forum_get_topics($tid, $sortby, $forum_per_page) {
-  global $user, $forum_topic_list_header;
+function forum_get_topics($tid, $nid = NULL) {
+  global $user;
 
-  $forum_topic_list_header = array(
-    NULL,
-    array('data' => t('Topic'), 'field' => 'f.title'),
-    array('data' => t('Replies'), 'field' => 'f.comment_count'),
-    array('data' => t('Last reply'), 'field' => 'f.last_comment_timestamp'),
-  );
 
-  $order = _forum_get_topic_order($sortby);
-  for ($i = 0; $i < count($forum_topic_list_header); $i++) {
-    if ($forum_topic_list_header[$i]['field'] == $order['field']) {
-      $forum_topic_list_header[$i]['sort'] = $order['sort'];
-    }
-  }
-
-  $query = db_select('forum_index', 'f')->extend('PagerDefault')->extend('TableSort');
+  $query = db_select('forum_index', 'f');
   $query->fields('f');
   $query
     ->condition('f.tid', $tid)
-    ->addTag('node_access')
-    ->orderBy('f.sticky', 'DESC')
-    ->orderByHeader($forum_topic_list_header)
-    ->limit($forum_per_page);
+    ->addTag('node_access');
 
-  $count_query = db_select('forum_index', 'f');
-  $count_query->condition('f.tid', $tid);
-  $count_query->addExpression('COUNT(*)');
-  $count_query->addTag('node_access');
-
-  $query->setCountQuery($count_query);
   $result = $query->execute();
   $nids = array();
   foreach ($result as $record) {
     $nids[] = $record->nid;
   }
   if ($nids) {
-    $query = db_select('node', 'n')->extend('TableSort');
+    $query = db_select('node', 'n');
     $query->fields('n', array('title', 'nid', 'type', 'sticky', 'created', 'uid'));
     $query->addField('n', 'comment', 'comment_mode');
 
@@ -873,10 +864,7 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
 
     $query->addExpression('CASE ncs.last_comment_uid WHEN 0 THEN ncs.last_comment_name ELSE u2.name END', 'last_comment_name');
 
-    $query
-      ->orderBy('f.sticky', 'DESC')
-      ->orderByHeader($forum_topic_list_header)
-      ->condition('n.nid', $nids);
+    $query->condition('n.nid', $nids);
 
     $result = $query->execute();
   }
@@ -919,10 +907,10 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
       $last_reply->uid = $topic->last_comment_uid;
       $topic->last_reply = $last_reply;
     }
-    $topics[] = $topic;
+    $topics[$topic->nid] = $topic;
   }
 
-  return $topics;
+  return $nid ? (isset($topics[$nid]) ? $topics[$nid] : NULL) : $topics;
 }
 
 /**
@@ -1075,3 +1063,84 @@ function forum_config_info() {
   );
   return $prefixes;
 }
+
+
+/**
+ * Preprocesses variables for forum-submitted.tpl.php.
+ *
+ * The submission information will be displayed in the forum list and topic
+ * list.
+ *
+ * @param $variables
+ *   An array containing the following elements:
+ *   - topic: The topic object.
+ *
+ * @see forum-submitted.tpl.php
+ * @see theme_forum_submitted()
+ */
+function template_preprocess_forum_submitted(&$variables) {
+  $variables['author'] = isset($variables['topic']->uid) ? theme('username', array('account' => $variables['topic'])) : '';
+  $variables['time'] = isset($variables['topic']->created) ? format_interval(REQUEST_TIME - $variables['topic']->created) : '';
+}
+
+/**
+ * Preprocesses variables for forum-icon.tpl.php.
+ *
+ * @param $variables
+ *   An array containing the following elements:
+ *   - new_posts: Indicates whether or not the topic contains new posts.
+ *   - num_posts: The total number of posts in all topics.
+ *   - comment_mode: An integer indicating whether comments are open, closed,
+ *     or hidden.
+ *   - sticky: Indicates whether the topic is sticky.
+ *   - first_new: Indicates whether this is the first topic with new posts.
+ *
+ * @see forum-icon.tpl.php
+ * @see theme_forum_icon()
+ */
+function template_preprocess_forum_icon(&$variables) {
+  $variables['hot_threshold'] = config_get('forum.settings', 'forum_hot_topic');
+  if ($variables['num_posts'] > $variables['hot_threshold']) {
+    $variables['icon_class'] = $variables['new_posts'] ? 'hot-new' : 'hot';
+    $variables['icon_title'] = $variables['new_posts'] ? t('Hot topic, new comments') : t('Hot topic');
+  }
+  else {
+    $variables['icon_class'] = $variables['new_posts'] ? 'new' : 'default';
+    $variables['icon_title'] = $variables['new_posts'] ? t('New comments') : t('Normal topic');
+  }
+
+  if ($variables['comment_mode'] == COMMENT_NODE_CLOSED || $variables['comment_mode'] == COMMENT_NODE_HIDDEN) {
+    $variables['icon_class'] = 'closed';
+    $variables['icon_title'] = t('Closed topic');
+  }
+
+  if ($variables['sticky'] == 1) {
+    $variables['icon_class'] = 'sticky';
+    $variables['icon_title'] = t('Sticky topic');
+  }
+}
+
+
+/**
+ * Preprocesses variables for views fields.
+ */
+function forum_preprocess_views_view_field(&$variables) {
+  if ($variables['view']->name == 'subforum' && $variables['field']->field_alias == 'node_title') {
+    $topic = forum_get_topics($variables['view']->args[0], $variables['row']->nid);
+    $variables['subforum_icon'] = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
+  }
+
+  if ($variables['view']->name == 'forums' && $variables['field']->field_alias == 'taxonomy_term_data_name') {
+    global $user;
+    if (_forum_topics_unread($variables['row']->tid, $user->uid)) {
+      $variables['icon_class'] = 'new';
+      $variables['icon_title'] = t('New posts');
+    }
+    else {
+      $variables['icon_class'] = 'default';
+      $variables['icon_title'] = t('No new posts');
+    }
+  }
+}
+
+

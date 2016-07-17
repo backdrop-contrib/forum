@@ -236,7 +236,7 @@ function forum_overview($form, &$form_state) {
  * @return
  *   A select form element.
  */
-function _forum_parent_select($tid, $title, $child_type) {
+function _forum_parent_select($tid, $title) {
 
   $parents = taxonomy_term_load_parents($tid);
   if ($parents) {

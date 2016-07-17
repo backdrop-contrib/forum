@@ -16,44 +16,43 @@
   white-space: nowrap;
 }
 
-#forum td.forum .icon {
-  background-image: url(../../misc/forum-icons.png);
+.view-forums .forum-name .icon {
+  background-image: url(images/forum-icons.png);
   background-repeat: no-repeat;
   float: left; /* LTR */
   height: 24px;
   margin: 0 9px 0 0; /* LTR */
   width: 24px;
 }
-#forum td.forum .forum-status-new {
+.view-forums .forum-name .forum-status-new {
   background-position: -24px 0;
 }
 
-#forum div.indent {
-  margin-left: 20px; /* LTR */
-}
-#forum .icon div {
-  background-image: url(../../misc/forum-icons.png);
+.view-forums .indent-1 {padding-left:20px;}
+.view-forums .indent-2 {padding-left:30px;}
+.view-forums .indent-3 {padding-left:40px;}
+.view-forums .indent-4 {padding-left:50px;}
+
+.view-subforum .topic-title-wrapper div {
+  background-image: url(images/forum-icons.png);
   background-repeat: no-repeat;
   width: 24px;
   height: 24px;
+  display: inline-block;
 }
-#forum .icon .topic-status-new {
+.view-subforum .topic-title-wrapper .topic-status-new {
   background-position: -24px 0;
 }
-#forum .icon .topic-status-hot {
+.view-subforum .topic-title-wrapper .topic-status-hot {
   background-position: -48px 0;
 }
-#forum .icon .topic-status-hot-new {
+.view-subforum .topic-title-wrapper .topic-status-hot-new {
   background-position: -72px 0;
 }
-#forum .icon .topic-status-sticky {
+.view-subforum .topic-title-wrapper .topic-status-sticky {
   background-position: -96px 0;
 }
-#forum .icon .topic-status-closed {
+.view-subforum .topic-title-wrapper .topic-status-closed {
   background-position: -120px 0;
 }
 
-.indent-1 {padding-left:20px;}
-.indent-2 {padding-left:30px;}
-.indent-3 {padding-left:40px;}
-.indent-4 {padding-left:50px;}
