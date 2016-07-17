@@ -40,6 +40,9 @@ function forum_theme() {
       'template' => 'views-view-table--forums',
       'base hook' => 'views_view_table',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
+      'preprocess functions' => array(
+        'forum_preprocess_views_view__forums',
+      ),
     ),
     'views_view_field__forums__description' => array(
       'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
@@ -1120,7 +1123,6 @@ function template_preprocess_forum_icon(&$variables) {
   }
 }
 
-
 /**
  * Preprocesses variables for views fields.
  */
@@ -1140,6 +1142,23 @@ function forum_preprocess_views_view_field(&$variables) {
       $variables['icon_class'] = 'default';
       $variables['icon_title'] = t('No new posts');
     }
+  }
+}
+
+/**
+ * Preprocesses variables for forum list.
+ */
+function forum_preprocess_views_view__forums(&$variables) {
+  foreach ($variables['rows'] as $row_count => $row) {
+    $tid = $variables['result'][$row_count]->tid;
+    if (taxonomy_term_load_children($tid, 'forums')) {
+      $variables['row_classes'][$row_count][] = 'parent-row';
+    }
+    $indent = count(taxonomy_term_load_parents_all($tid)) - 1;
+    if ($indent) {
+      $variables['row_classes'][$row_count][] = 'child-row child-' . $indent;
+    }
+    $variables['indent'][$row_count] = $indent;
   }
 }
 
