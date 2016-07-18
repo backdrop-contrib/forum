@@ -44,6 +44,15 @@ function forum_theme() {
         'forum_preprocess_views_view__forums',
       ),
     ),
+    'views_view_table__subforum' => array(
+      'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
+      'template' => 'views-view-table--subforum',
+      'base hook' => 'views_view_table',
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
+      'preprocess functions' => array(
+        'forum_preprocess_views_view__subforum',
+      ),
+    ),
     'views_view_field__forums__description' => array(
       'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
       'template' => 'views-view-field--forums--description',
@@ -1160,6 +1169,15 @@ function forum_preprocess_views_view__forums(&$variables) {
     }
     $variables['indent'][$row_count] = $indent;
   }
+}
+
+/**
+ * Preprocesses variables for forum topic list.
+ */
+function forum_preprocess_views_view__subforum(&$variables) {
+  $breadcrumb[] = l(t('Home'), NULL);
+  $breadcrumb[] = l(t('Forum'), 'forum');
+  backdrop_set_breadcrumb($breadcrumb);
 }
 
 
