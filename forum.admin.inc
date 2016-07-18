@@ -159,20 +159,6 @@ function forum_admin_settings($form) {
     '#options' => $number,
     '#description' => t('The number of replies a topic must have to be considered "hot".'),
   );
-  $number = backdrop_map_assoc(array(10, 25, 50, 75, 100));
-  $form['forum_per_page'] = array('#type' => 'select',
-    '#title' => t('Topics per page'),
-    '#default_value' => $config->get('forum_per_page'),
-    '#options' => $number,
-    '#description' => t('Default number of forum topics displayed per page.'),
-  );
-  $forder = array(1 => t('Date - newest first'), 2 => t('Date - oldest first'), 3 => t('Posts - most active first'), 4 => t('Posts - least active first'));
-  $form['forum_order'] = array('#type' => 'radios',
-    '#title' => t('Default order'),
-    '#default_value' => $config->get('forum_order'),
-    '#options' => $forder,
-    '#description' => t('Default display order for topics.'),
-  );
   
   $form['actions']['#type'] = 'actions';
   $form['actions']['submit'] = array(
@@ -186,8 +172,6 @@ function forum_admin_settings($form) {
 function forum_admin_settings_submit($form, $form_state) {
   $config = config('forum.settings');
   $config->set('forum_hot_topic', $form_state['values']['forum_hot_topic']);
-  $config->set('forum_per_page', $form_state['values']['forum_per_page']);
-  $config->set('forum_order', $form_state['values']['forum_order']);
   $config->save();
 }
 
