@@ -869,6 +869,9 @@ function forum_get_topics($tid, $nid = NULL) {
     $query->join('forum_index', 'f', 'f.nid = ncs.nid');
     $query->addField('f', 'tid', 'forum_tid');
 
+    $query->join('forum', 'm', 'm.nid = ncs.nid');
+    $query->addField('m', 'tid', 'forum_current_tid');
+
     $query->join('users', 'u', 'n.uid = u.uid');
     $query->addField('u', 'name');
 
@@ -890,7 +893,7 @@ function forum_get_topics($tid, $nid = NULL) {
     if ($user->uid) {
       // A forum is new if the topic is new, or if there are new comments since
       // the user's last visit.
-      if ($topic->forum_tid != $tid) {
+      if ($topic->forum_current_tid != $tid) {
         $topic->new = 0;
       }
       else {
@@ -918,6 +921,13 @@ function forum_get_topics($tid, $nid = NULL) {
       $last_reply->name = $topic->last_comment_name;
       $last_reply->uid = $topic->last_comment_uid;
       $topic->last_reply = $last_reply;
+    }
+    // Store all the forums where this topic is listed. This is written with the
+    // understanding that the topic can be in more than two places, otherwise
+    // dont need the array. Will need to check.
+    $topic->forum_tids[] = $topic->forum_tid;
+    if (isset($topics[$topic->nid]->forum_tids)) {
+      $topic->forum_tids = array_merge($topic->forum_tids, $topics[$topic->nid]->forum_tids);
     }
     $topics[$topic->nid] = $topic;
   }
@@ -1137,7 +1147,14 @@ function template_preprocess_forum_icon(&$variables) {
  */
 function forum_preprocess_views_view_field(&$variables) {
   if ($variables['view']->name == 'subforum' && $variables['field']->field_alias == 'node_title') {
-    $topic = forum_get_topics($variables['view']->args[0], $variables['row']->nid);
+    $tid = $variables['view']->args[0];
+    $topic = forum_get_topics($tid, $variables['row']->nid);
+    if ($topic->forum_current_tid != $tid) {
+      $term = taxonomy_term_load($topic->forum_current_tid);
+      $name = $term->name;
+      $variables['topic_moved'] = t(' (topic moved to !new_location)', array('!new_location' => l($name, 'forum/' . $topic->forum_current_tid)));
+    }
+
     $variables['subforum_icon'] = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
   }
 

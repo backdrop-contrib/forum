@@ -21,5 +21,6 @@
 <div class="topic-title-wrapper">
   <?php print $subforum_icon; ?>
   <span class="topic-title"><?php print $output ?></span>
+  <?php if (isset($topic_moved)) print $topic_moved; ?>
 </div>
     
