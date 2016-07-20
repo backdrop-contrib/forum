@@ -386,7 +386,7 @@
                         "relationship": "none",
                         "group_type": "group",
                         "ui_name": "",
-                        "default_action": "ignore",
+                        "default_action": "default",
                         "exception": {
                             "value": "all",
                             "title_enable": 0,
@@ -396,9 +396,10 @@
                         "title": "%1",
                         "breadcrumb_enable": 1,
                         "breadcrumb": "%1",
-                        "default_argument_type": "fixed",
+                        "default_argument_type": "raw",
                         "default_argument_options": {
-                            "argument": ""
+                            "index": "1",
+                            "use_alias": "1"
                         },
                         "default_argument_skip_url": 0,
                         "summary_options": {
@@ -412,17 +413,36 @@
                             "number_of_records": "0",
                             "format": "default_summary"
                         },
-                        "specify_validation": 0,
+                        "specify_validation": 1,
                         "validate": {
-                            "type": "none",
+                            "type": "taxonomy_term",
                             "fail": "not found"
                         },
-                        "validate_options": [],
+                        "validate_options": {
+                            "type": "convert",
+                            "transform": "1",
+                            "vocabularies": []
+                        },
                         "break_phrase": 0,
                         "add_table": 0,
                         "require_value": 0,
                         "reduce_duplicates": 0,
                         "set_breadcrumb": 0
+                    }
+                },
+                "empty": {
+                    "area": {
+                        "id": "area",
+                        "table": "views",
+                        "field": "area",
+                        "relationship": "none",
+                        "group_type": "group",
+                        "ui_name": "",
+                        "label": "",
+                        "empty": true,
+                        "content": "<p>There are no topics in this forum.</p>\n",
+                        "format": "filtered_html",
+                        "tokenize": 0
                     }
                 }
             }
