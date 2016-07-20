@@ -1155,6 +1155,9 @@ function forum_preprocess_views_view__forums(&$variables) {
     if ($indent) {
       $variables['row_classes'][$row_count][] = 'child-row child-' . $indent;
     }
+    else {
+      $variables['row_classes'][$row_count][] = 'root-row';
+    }
     $variables['indent'][$row_count] = $indent;
   }
 }
