@@ -1199,3 +1199,14 @@ function forum_views_pre_render(&$view) {
     backdrop_set_breadcrumb($breadcrumb);
   }
 }
+
+
+/**
+ * Implements hook_path_pattern_alter().
+ */
+function forum_path_pattern_alter(&$pattern, array &$context) {
+  $entity = $context['entity'];
+  if ($entity->entityType() == 'node' && $entity->type == 'forum') {
+    $pattern = 'forum/thread/[node:nid]';
+  }
+}
