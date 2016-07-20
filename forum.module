@@ -126,9 +126,9 @@ function forum_menu() {
 function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
   global $user;
 
-/*   // Add action link to 'node/add/forum' on 'forum' sub-pages.
+   // Add action link to 'node/add/forum' on 'forum' sub-pages.
   if ($root_path == 'forum' || $root_path == 'forum/%') {
-    $tid = (isset($router_item['page_arguments'][0]) ? $router_item['page_arguments'][0]->tid : 0);
+    $tid = (isset($router_item['page_arguments'][2]) ? $router_item['page_arguments'][2] : 0);
     $forum_term = forum_forum_load($tid);
     if ($forum_term) {
       $links = array();
@@ -171,7 +171,7 @@ function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
       $data['actions']['output'] = array_merge($data['actions']['output'], $links);
     }
   }
- */}
+}
 
 /**
  * Implements hook_entity_info_alter().
@@ -1196,6 +1196,6 @@ function forum_views_pre_render(&$view) {
     $breadcrumb = array();
     $breadcrumb[] = l(t('Home'), NULL);
     $breadcrumb[] = l(t('Forum'), 'forum');
-    drupal_set_breadcrumb($breadcrumb);
+    backdrop_set_breadcrumb($breadcrumb);
   }
 }
