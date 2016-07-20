@@ -1152,7 +1152,7 @@ function forum_preprocess_views_view_field(&$variables) {
     if ($topic->forum_current_tid != $tid) {
       $term = taxonomy_term_load($topic->forum_current_tid);
       $name = $term->name;
-      $variables['topic_moved'] = t(' (topic moved to !new_location)', array('!new_location' => l($name, 'forum/' . $topic->forum_current_tid)));
+      $variables['topic_moved'] = t('(topic moved to !new_location)', array('!new_location' => l($name, 'forum/' . $topic->forum_current_tid)));
     }
 
     $variables['subforum_icon'] = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
@@ -1189,12 +1189,13 @@ function forum_preprocess_views_view__forums(&$variables) {
 }
 
 /**
- * Preprocesses variables for forum topic list.
+ * Implements hook_views_pre_render().
  */
-function forum_preprocess_views_view__subforum(&$variables) {
-  $breadcrumb[] = l(t('Home'), NULL);
-  $breadcrumb[] = l(t('Forum'), 'forum');
-  backdrop_set_breadcrumb($breadcrumb);
+function forum_views_pre_render(&$view) {
+  if ($view->name == 'subforum') {
+    $breadcrumb = array();
+    $breadcrumb[] = l(t('Home'), NULL);
+    $breadcrumb[] = l(t('Forum'), 'forum');
+    drupal_set_breadcrumb($breadcrumb);
+  }
 }
-
-
