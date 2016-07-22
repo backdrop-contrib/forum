@@ -1116,9 +1116,7 @@ function template_preprocess_forum_icon(&$variables) {
  */
 function forum_preprocess_views_view_field(&$variables) {
   if ($variables['view']->name == 'subforum' && $variables['field']->field_alias == 'node_title') {
-    $taxonomy = taxonomy_term_load_multiple_by_name($variables['view']->args[0], 'forums');
-    $term = reset($taxonomy);
-    $tid = $term->tid;
+    $tid = $variables['view']->argument['tid']->argument;
     $topic = forum_get_topics($tid, $variables['row']->nid);
     if ($topic->forum_current_tid != $tid) {
       $term = taxonomy_term_load($topic->forum_current_tid);
