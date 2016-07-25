@@ -30,6 +30,7 @@ function forum_theme() {
     'forum_submitted' => array(
       'template' => 'forum-submitted',
       'variables' => array('topic' => NULL),
+      'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
     'forum_form' => array(
       'render element' => 'form',
