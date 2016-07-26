@@ -135,8 +135,6 @@ function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
       $links = array();
       // Loop through all bundles for forum taxonomy vocabulary field.
       $field = field_info_field('taxonomy_forums');
-      dpm($field);
-      dpm($field);
       if (!empty($field['bundles']['node'])) {
         foreach ($field['bundles']['node'] as $type) {
           if (node_access('create', $type)) {
