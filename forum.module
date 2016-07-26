@@ -45,13 +45,13 @@ function forum_theme() {
         'forum_preprocess_views_view__forums',
       ),
     ),
-    'views_view_table__subforum' => array(
+    'views_view_table__topic' => array(
       'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
-      'template' => 'views-view-table--subforum',
+      'template' => 'views-view-table--topic',
       'base hook' => 'views_view_table',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
       'preprocess functions' => array(
-        'forum_preprocess_views_view__subforum',
+        'forum_preprocess_views_view__topic',
       ),
     ),
     'views_view_field__forums__description' => array(
@@ -66,9 +66,9 @@ function forum_theme() {
       'base hook' => 'views_view_field',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
-    'views_view_field__subforum__title' => array(
+    'views_view_field__topic__title' => array(
       'arguments' => array('view' => NULL, 'field' => NULL, 'row' => NULL),
-      'template' => 'views-view-field--subforum--title',
+      'template' => 'views-view-field--topic--title',
       'base hook' => 'views_view_field',
       'path' => backdrop_get_path('module', 'forum') . '/templates',
     ),
@@ -135,15 +135,19 @@ function forum_menu_local_tasks_alter(&$data, $router_item, $root_path) {
       $links = array();
       // Loop through all bundles for forum taxonomy vocabulary field.
       $field = field_info_field('taxonomy_forums');
-      foreach ($field['bundles']['node'] as $type) {
-        if (node_access('create', $type)) {
-          $links[$type] = array(
-            '#theme' => 'menu_local_action',
-            '#link' => array(
-              'title' => t('Add new @node_type', array('@node_type' => node_type_get_name($type))),
-              'href' => 'node/add/' . str_replace('_', '-', $type) . '/' . $forum_term->tid,
-            ),
-          );
+      dpm($field);
+      dpm($field);
+      if (!empty($field['bundles']['node'])) {
+        foreach ($field['bundles']['node'] as $type) {
+          if (node_access('create', $type)) {
+            $links[$type] = array(
+              '#theme' => 'menu_local_action',
+              '#link' => array(
+                'title' => t('Add new @node_type', array('@node_type' => node_type_get_name($type))),
+                'href' => 'node/add/' . str_replace('_', '-', $type) . '/' . $forum_term->tid,
+              ),
+            );
+          }
         }
       }
       if (empty($links)) {
@@ -1116,7 +1120,7 @@ function template_preprocess_forum_icon(&$variables) {
  * Preprocesses variables for views fields.
  */
 function forum_preprocess_views_view_field(&$variables) {
-  if ($variables['view']->name == 'subforum' && $variables['field']->field_alias == 'node_title') {
+  if ($variables['view']->name == 'topic' && $variables['field']->field_alias == 'node_title') {
     $tid = $variables['view']->argument['tid']->argument;
     $topic = forum_get_topics($tid, $variables['row']->nid);
     if ($topic->forum_current_tid != $tid) {
@@ -1124,8 +1128,7 @@ function forum_preprocess_views_view_field(&$variables) {
       $name = $term->name;
       $variables['topic_moved'] = t('(topic moved to !new_location)', array('!new_location' => l($name, 'forum/' . $topic->forum_current_tid)));
     }
-
-    $variables['subforum_icon'] = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
+    $variables['topic_icon'] = theme('forum_icon', array('new_posts' => $topic->new, 'num_posts' => $topic->comment_count, 'comment_mode' => $topic->comment_mode, 'sticky' => $topic->sticky, 'first_new' => $topic->first_new));
   }
 
   if ($variables['view']->name == 'forums' && $variables['field']->field_alias == 'taxonomy_term_data_name') {
@@ -1165,7 +1168,7 @@ function forum_preprocess_views_view__forums(&$variables) {
  * Implements hook_views_pre_render().
  */
 function forum_views_pre_render(&$view) {
-  if ($view->name == 'subforum') {
+  if ($view->name == 'topic') {
     $breadcrumb = array();
     $breadcrumb[] = l(t('Home'), NULL);
     $breadcrumb[] = l(t('Forum'), 'forum');

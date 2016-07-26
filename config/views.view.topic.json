@@ -1,11 +1,11 @@
 {
-    "_config_name": "views.view.subforum",
-    "name": "subforum",
+    "_config_name": "views.view.topic",
+    "name": "Topics",
     "description": "",
     "tag": "default",
     "disabled": false,
     "base_table": "node",
-    "human_name": "Subforum",
+    "human_name": "topic",
     "core": "1.4.x-dev",
     "display": {
         "default": {
@@ -303,7 +303,7 @@
                         "order": "DESC"
                     }
                 },
-                "title": "Subforum",
+                "title": "topic",
                 "filter_groups": {
                     "operator": "AND",
                     "groups": {

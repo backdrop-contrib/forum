@@ -8,7 +8,7 @@
  * - $field: The field handler object that can process the input
  * - $row: The raw SQL result that can be used
  * - $output: The processed output that will normally be used.
- * - $subforum_icon: The themed icon for this topic.
+ * - $topic_icon: The themed icon for this topic.
  *
  * When fetching output from the $row, this construct should be used:
  * $data = $row->{$field->field_alias}
@@ -19,7 +19,7 @@
  */
 ?>
 <div class="topic-title-wrapper">
-  <?php print $subforum_icon; ?>
+  <?php print $topic_icon; ?>
   <span class="topic-title"><?php print $output ?></span>
   <?php if (isset($topic_moved)) print $topic_moved; ?>
 </div>

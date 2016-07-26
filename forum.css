@@ -33,26 +33,26 @@
 .view-forums .indent-3 {padding-left:40px;}
 .view-forums .indent-4 {padding-left:50px;}
 
-.view-subforum .topic-title-wrapper div {
+.view-topic .topic-title-wrapper div {
   background-image: url(images/forum-icons.png);
   background-repeat: no-repeat;
   width: 24px;
   height: 24px;
   display: inline-block;
 }
-.view-subforum .topic-title-wrapper .topic-status-new {
+.view-topic .topic-title-wrapper .topic-status-new {
   background-position: -24px 0;
 }
-.view-subforum .topic-title-wrapper .topic-status-hot {
+.view-topic .topic-title-wrapper .topic-status-hot {
   background-position: -48px 0;
 }
-.view-subforum .topic-title-wrapper .topic-status-hot-new {
+.view-topic .topic-title-wrapper .topic-status-hot-new {
   background-position: -72px 0;
 }
-.view-subforum .topic-title-wrapper .topic-status-sticky {
+.view-topic .topic-title-wrapper .topic-status-sticky {
   background-position: -96px 0;
 }
-.view-subforum .topic-title-wrapper .topic-status-closed {
+.view-topic .topic-title-wrapper .topic-status-closed {
   background-position: -120px 0;
 }
 
