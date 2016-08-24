@@ -1,11 +1,11 @@
 {
     "_config_name": "views.view.topic",
-    "name": "Topics",
+    "name": "topic",
     "description": "",
     "tag": "default",
     "disabled": false,
     "base_table": "node",
-    "human_name": "topic",
+    "human_name": "Topics",
     "core": "1.4.x-dev",
     "display": {
         "default": {
@@ -303,7 +303,7 @@
                         "order": "DESC"
                     }
                 },
-                "title": "topic",
+                "title": "Topics",
                 "filter_groups": {
                     "operator": "AND",
                     "groups": {
