@@ -195,7 +195,7 @@ function forum_overview($form, &$form_state) {
       $term = $form[$key]['#term'];
       $form[$key]['view']['#href'] = 'forum/' . $term['tid'];
       $form[$key]['operations']['#links']['edit']['title'] = t('edit forum');
-      $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/edit/forum/' . $term['tid'];
+      $form[$key]['operations']['#links']['edit']['href'] = 'admin/structure/forum/' . $term['tid'];
     }
   }
 
