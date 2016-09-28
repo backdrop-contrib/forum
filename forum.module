@@ -456,6 +456,25 @@ function forum_field_storage_pre_insert($entity_type, $entity, &$skip_fields) {
 }
 
 /**
+ * Implements hook_field_attach_view_alter().
+ *
+ * Modify the output of the rendered forums taxonomy term field on node display
+ * to show a link to the forum View instead of the default 'taxonomy/term/tid'.
+ */
+function forum_field_attach_view_alter(&$output, $context) {
+  // Append RDF term mappings on displayed taxonomy links.
+  foreach (element_children($output) as $field_name) {
+    $element = &$output[$field_name];
+    if ($element['#field_type'] == 'taxonomy_term_reference' && $element['#formatter'] == 'taxonomy_term_reference_link') {
+      foreach ($element['#items'] as $delta => $item) {
+        $term = $item['taxonomy_term'];
+        $element[$delta]['#href'] = 'forum/' . $term->tid;
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_field_storage_pre_update().
  */
 function forum_field_storage_pre_update($entity_type, $entity, &$skip_fields) {
@@ -1167,9 +1186,18 @@ function forum_preprocess_views_view__forums(&$variables) {
  */
 function forum_views_pre_render(&$view) {
   if ($view->name == 'topic') {
+    $parents = taxonomy_term_load_parents_all($view->args[0]);
+    unset($parents[0]);
+    $parents = array_reverse($parents);
+
     $breadcrumb = array();
     $breadcrumb[] = l(t('Home'), NULL);
     $breadcrumb[] = l(t('Forum'), 'forum');
+    if ($parents) {
+      foreach ($parents as $parent) {
+        $breadcrumb[] = l($parent->name, 'forum/' . $parent->tid);
+      }
+    }
     backdrop_set_breadcrumb($breadcrumb);
   }
 }

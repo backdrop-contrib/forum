@@ -86,11 +86,11 @@ function forum_enable() {
       ),
       'display' => array(
         'default' => array(
-          'type' => 'hidden',
+          'type' => 'taxonomy_term_reference_link',
          'weight' => 10,
         ),
         'teaser' => array(
-          'type' => 'hidden',
+          'type' => 'taxonomy_term_reference_link',
          'weight' => 10,
         ),
       ),
