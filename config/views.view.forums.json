@@ -107,7 +107,7 @@
                             "alter_text": 0,
                             "text": "",
                             "make_link": 1,
-                            "path": "forum/[name]",
+                            "path": "forum/[tid]",
                             "absolute": 0,
                             "external": 0,
                             "replace_spaces": 1,
