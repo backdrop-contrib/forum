@@ -17,7 +17,7 @@
 }
 
 #forum td.forum .icon {
-  background-image: url(../../misc/forum-icons.png);
+  background-image: url(forum-icons.png);
   background-repeat: no-repeat;
   float: left; /* LTR */
   height: 24px;
