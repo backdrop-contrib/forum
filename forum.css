@@ -32,7 +32,7 @@
   margin-left: 20px; /* LTR */
 }
 #forum .icon div {
-  background-image: url(../../misc/forum-icons.png);
+  background-image: url(forum-icons.png);
   background-repeat: no-repeat;
   width: 24px;
   height: 24px;
