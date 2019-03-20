@@ -487,7 +487,7 @@ function forum_field_storage_pre_insert($entity_type, $entity, &$skip_fields) {
           'nid' => $entity->nid,
           'title' => $entity->title,
           'tid' => $item['tid'],
-          'sticky' => $entity->sticky,
+          'sticky' => (int) $entity->sticky,
           'created' => $entity->created,
           'comment_count' => 0,
           'last_comment_timestamp' => $entity->created,
@@ -496,6 +496,7 @@ function forum_field_storage_pre_insert($entity_type, $entity, &$skip_fields) {
     }
     $query->execute();
   }
+
 }
 
 /**
@@ -523,7 +524,7 @@ function forum_field_storage_pre_update($entity_type, $entity, &$skip_fields) {
             'nid' => $entity->nid,
             'title' => $entity->title,
             'tid' => $item['tid'],
-            'sticky' => $entity->sticky,
+            'sticky' => (int) $entity->sticky,
             'created' => $entity->created,
             'comment_count' => 0,
             'last_comment_timestamp' => $entity->created,
