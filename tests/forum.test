@@ -693,7 +693,7 @@ class ForumIndexTestCase extends BackdropWebTestCase {
 
     // Unpublish the node.
     $edit = array(
-      'status' => FALSE,
+      'status' => 0,
     );
     $this->backdropPost("node/{$node->nid}/edit", $edit, t('Save'));
     $this->backdropGet("node/{$node->nid}");
