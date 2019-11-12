@@ -936,6 +936,7 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
   $topics = array();
   $first_new_found = FALSE;
   foreach ($result as $topic) {
+    $topic = entity_create('node', (array) $topic);
     if ($user->uid) {
       // A forum is new if the topic is new, or if there are new comments since
       // the user's last visit.
