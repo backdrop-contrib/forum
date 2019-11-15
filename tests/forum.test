@@ -478,12 +478,11 @@ class ForumTestCase extends BackdropWebTestCase {
 
     $type = t('Forum topic');
     if ($container) {
-      $this->assertNoRaw(t('@type %title has been created.', array('@type' => $type, '%title' => $title)), 'Forum topic was not created');
       $this->assertRaw(t('The item %title is a forum container, not a forum.', array('%title' => $forum['name'])), 'Error message was shown');
       return;
     }
     else {
-      $this->assertRaw(t('@type %title has been created.', array('@type' => $type, '%title' => $title)), 'Forum topic was created');
+      $this->assertRaw($title, 'Forum topic was created');
       $this->assertNoRaw(t('The item %title is a forum container, not a forum.', array('%title' => $forum['name'])), 'No error message was shown');
     }
 
