@@ -550,7 +550,7 @@ function forum_field_storage_pre_update($entity_type, $entity, &$skip_fields) {
  */
 function forum_form_taxonomy_form_vocabulary_alter(&$form, &$form_state, $form_id) {
   $vid = config_get('forum.settings', 'forum_nav_vocabulary');
-  if (isset($form['vid']['#value']) && $form['vid']['#value'] == $vid) {
+  if (isset($form['machine_name']['#default_value']) && $form['machine_name']['#default_value'] == $vid) {
     $form['help_forum_vocab'] = array(
       '#markup' => t('This is the designated forum vocabulary. Some of the normal vocabulary options have been removed.'),
       '#weight' => -1,
@@ -569,7 +569,7 @@ function forum_form_taxonomy_form_vocabulary_alter(&$form, &$form_state, $form_i
  */
 function forum_form_taxonomy_form_term_alter(&$form, &$form_state, $form_id) {
    $vid = config_get('forum.settings', 'forum_nav_vocabulary');
-   if (isset($form['vid']['#value']) && $form['vid']['#value'] == $vid) {
+   if (isset($form['vocabulary']['#value']) && $form['vocabulary']['#value'] == $vid) {
     // Hide multiple parents select from forum terms.
     $form['relations']['parent']['#access'] = FALSE;
   }
@@ -936,6 +936,7 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
   $topics = array();
   $first_new_found = FALSE;
   foreach ($result as $topic) {
+    $topic = entity_create('node', (array) $topic);
     if ($user->uid) {
       // A forum is new if the topic is new, or if there are new comments since
       // the user's last visit.
