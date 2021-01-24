@@ -42,20 +42,20 @@ function forum_theme() {
  */
 function forum_menu() {
   $items['forum'] = array(
-    'title' => 'Forums',
+    'title' => t('Forums'),
     'page callback' => 'forum_page',
     'access arguments' => array('access content'),
     'file' => 'forum.pages.inc',
   );
   $items['forum/%forum_forum'] = array(
-    'title' => 'Forums',
+    'title' => t('Forums'),
     'page callback' => 'forum_page',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'file' => 'forum.pages.inc',
   );
   $items['admin/structure/forum'] = array(
-    'title' => 'Forums',
+    'title' => t('Forums'),
     'description' => 'Control forum hierarchy settings.',
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('forum_overview'),
@@ -63,12 +63,12 @@ function forum_menu() {
     'file' => 'forum.admin.inc',
   );
   $items['admin/structure/forum/list'] = array(
-    'title' => 'List',
+    'title' => t('List'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
   $items['admin/structure/forum/add/container'] = array(
-    'title' => 'Add container',
+    'title' => t('Add container'),
     'page callback' => 'forum_form_main',
     'page arguments' => array('container'),
     'access arguments' => array('administer forums'),
@@ -77,7 +77,7 @@ function forum_menu() {
     'file' => 'forum.admin.inc',
   );
   $items['admin/structure/forum/add/forum'] = array(
-    'title' => 'Add forum',
+    'title' => t('Add forum'),
     'page callback' => 'forum_form_main',
     'page arguments' => array('forum'),
     'access arguments' => array('administer forums'),
@@ -86,7 +86,7 @@ function forum_menu() {
     'file' => 'forum.admin.inc',
   );
   $items['admin/structure/forum/settings'] = array(
-    'title' => 'Settings',
+    'title' => t('Settings'),
     'page callback' => 'backdrop_get_form',
     'page arguments' => array('forum_admin_settings'),
     'access arguments' => array('administer forums'),
@@ -96,14 +96,14 @@ function forum_menu() {
     'file' => 'forum.admin.inc',
   );
   $items['admin/structure/forum/edit/container/%taxonomy_term'] = array(
-    'title' => 'Edit container',
+    'title' => t('Edit container'),
     'page callback' => 'forum_form_main',
     'page arguments' => array('container', 5),
     'access arguments' => array('administer forums'),
     'file' => 'forum.admin.inc',
   );
   $items['admin/structure/forum/edit/forum/%taxonomy_term'] = array(
-    'title' => 'Edit forum',
+    'title' => t('Edit forum'),
     'page callback' => 'forum_form_main',
     'page arguments' => array('forum', 5),
     'access arguments' => array('administer forums'),
