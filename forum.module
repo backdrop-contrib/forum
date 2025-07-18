@@ -816,7 +816,7 @@ function forum_forum_load($tid = NULL) {
       ->fetchObject();
 
     // Merge in the "Last Post" information.
-    $last_post = new stdClass();
+    $last_post = new Node();
     if (!empty($topic->last_comment_timestamp)) {
       $last_post->created = $topic->last_comment_timestamp;
       $last_post->name = $topic->last_comment_name;
@@ -937,7 +937,7 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
       ->orderByHeader($forum_topic_list_header)
       ->condition('n.nid', $nids);
 
-    $result = $query->execute();
+    $result = $query->execute()->fetchAllAssoc('nid', PDO::FETCH_ASSOC);
   }
   else {
     $result = array();
@@ -945,7 +945,9 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
 
   $topics = array();
   $first_new_found = FALSE;
-  foreach ($result as $topic) {
+  foreach ($result as $topic_result) {
+    $topic = new Node($topic_result);
+
     if ($user->uid) {
       // A forum is new if the topic is new, or if there are new comments since
       // the user's last visit.
@@ -972,12 +974,13 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
     }
 
     if ($topic->comment_count > 0) {
-      $last_reply = new stdClass();
+      $last_reply = new Node();
       $last_reply->created = $topic->last_comment_timestamp;
       $last_reply->name = $topic->last_comment_name;
       $last_reply->uid = $topic->last_comment_uid;
       $topic->last_reply = $last_reply;
     }
+
     $topics[] = $topic;
   }
 
@@ -1170,7 +1173,10 @@ function template_preprocess_forum_topic_list(&$variables) {
       $variables['topics'][$id]->new_url = '';
       if ($topic->new_replies) {
         $variables['topics'][$id]->new_text = format_plural($topic->new_replies, '1 new', '@count new');
-        $variables['topics'][$id]->new_url = url("node/$topic->nid", array('query' => comment_new_page_count($topic->comment_count, $topic->new_replies, $topic), 'fragment' => 'new'));
+
+        $count = comment_new_page_count($topic->comment_count, $topic->new_replies, $topic);
+        $options = array('query' => $count, 'fragment' => 'new');
+        $variables['topics'][$id]->new_url = url("node/$topic->nid", $options);
       }
 
     }
