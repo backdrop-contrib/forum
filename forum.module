@@ -1,9 +1,19 @@
 <?php
-
 /**
  * @file
  * Provides discussion forums.
  */
+
+/**
+ * Implements hook_config_info().
+ */
+function forum_config_info() {
+  $prefixes['forum.settings'] = array(
+    'label' => t('Forum Settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
 
 /**
  * Implements hook_theme().
