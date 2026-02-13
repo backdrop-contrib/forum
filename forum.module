@@ -208,6 +208,19 @@ function forum_uri($forum) {
 }
 
 /**
+ * Implements hook_url_outbound_alter().
+ */
+function forum_url_outbound_alter(&$path, &$options, $original_path) {
+  $matches = array();
+  if ($path !== NULL && preg_match('|^taxonomy/term/([0-9]*)(?!/edit)(/.*)?|', $path, $matches)) {
+    $term = taxonomy_term_load($matches[1]);
+    if ($term->vocabulary == config_get('forum.settings', 'forum_nav_vocabulary')) {
+      $path = 'forum/' . $matches[1];
+    }
+  }
+}
+
+/**
  * Checks whether a node can be used in a forum, based on its content type.
  *
  * @param $node
